@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="CodeStruct - Civil Engineer and Data Scientist specializing in infrastructure innovation and data-driven solutions">
+    <meta name="keywords" content="civil engineering, data science, infrastructure, portfolio, machine learning">
+    <title>CodeStruct | Portfolio Hub</title>
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css"> <!-- Assuming this page also uses styles.css or a different stylesheet -->
+</head>
+<body>
+    <div class="particles-background" id="particles-js"></div> <!-- Ensure particles.js is initialized if used here -->
+    <div id="bridge-model"></div> <!-- Ensure this element is handled by your scripts if needed -->
+    
+    <div class="container">
+        <header class="header">
+            <div class="logo">sumo<span>imps</span></div>
+            <nav class="nav">
+                <a href="index.html" class="nav-link"><i class="fas fa-home"></i> Home</a> <!-- Links back to the landing page -->
+                <!-- MODIFIED LINE: href now points to auth.html -->
+                <a href="auth.html" class="nav-link admin-login-btn"><i class="fas fa-lock"></i> Admin</a>
+            </nav>
+        </header>
+
+        <main class="portfolio-main">
+            <!-- Admin Brief Section -->
+            <section class="admin-brief">
+                <div class="admin-avatar">
+                    <img src="profile-image.jpg" alt="Sumo The Styleful" class="profile-img">
+                </div>
+                <div class="admin-content">
+                    <h1><span class="highlight" id="profile-name">sumouli Pramanik</span></h1>
+                    <p class="admin-tagline" id="profile-tagline">Civil Engineer | Data Scientist | Infrastructure Consultant</p>
+                    <div class="admin-description">
+                        <p id="profile-description-1">I transform raw data into resilient infrastructure. With dual expertise in civil engineering and machine learning, I build bridges between physical construction and digital innovation.</p>
+                        <p id="profile-description-2">This portfolio hub showcases my technical capabilities, project achievements, and the intersection of engineering precision with data-driven insights.</p>
+                    </div>
+                    <div class="social-links">
+                        <a href="#" id="linkedin-url" class="social-icon"><i class="fab fa-linkedin"></i></a>
+                        <a href="#" id="github-url" class="social-icon"><i class="fab fa-github"></i></a>
+                        <a href="#" id="twitter-url" class="social-icon"><i class="fab fa-twitter"></i></a>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Access Portals -->
+            <section class="access-portals">
+                <!-- Projects Showcase -->
+                <div class="flip-card quest-portal">
+                    <div class="flip-card-inner">
+                        <div class="flip-card-front">
+                            <div class="portal-icon"><i class="fas fa-project-diagram"></i></div>
+                            <h3 id="projects-title">Quest Board/Projects</h3>
+                            <div class="quest-preview">
+                                <div class="quest-tag" id="project-1">Bridge Health AI</div>
+                                <div class="quest-tag" id="project-2">Smart City Analytics</div>
+                                <div class="quest-tag" id="project-3">Structural ML</div>
+                            </div>
+                        </div>
+                        <div class="flip-card-back">
+                            <h3>Project Details</h3>
+                            <p>Explore innovative engineering projects combining civil engineering with data science.</p>
+                            <div class="enter-btn">
+                                <span id="projects-btn-text">View Projects</span> <span><i class="fas fa-arrow-right"></i></span>
+                            </div>
+                        </div>
+                    </div>
+                    <a href="projects.html" class="card-link"></a> <!-- Links to a projects page -->
+                </div>
+
+                <!-- Skills XP Dashboard -->
+                <div class="flip-card xp-portal">
+                    <div class="flip-card-inner">
+                        <div class="flip-card-front">
+                            <div class="portal-icon"><i class="fas fa-chart-bar"></i></div>
+                            <h3 id="skills-title">Skills XP Dashboard</h3>
+                            <div class="xp-preview">
+                                <div class="xp-bar" style="--xp:90%">
+                                    <span id="skill-1-name">Python</span>
+                                </div>
+                                <div class="xp-bar" style="--xp:85%">
+                                    <span id="skill-2-name">AutoCAD</span>
+                                </div>
+                                <div class="xp-bar" style="--xp:78%">
+                                    <span id="skill-3-name">Machine Learning</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flip-card-back">
+                            <h3>Skill Proficiency</h3>
+                            <p>Detailed breakdown of technical skills and expertise levels in various domains.</p>
+                            <div class="enter-btn">
+                                <span id="skills-btn-text">Explore Skills</span> <span><i class="fas fa-arrow-right"></i></span>
+                            </div>
+                        </div>
+                    </div>
+                    <a href="skills.html" class="card-link"></a> <!-- Links to a skills page -->
+                </div>
+
+                <!-- Contact/Hire Me -->
+                <div class="flip-card contact-portal">
+                    <div class="flip-card-inner">
+                        <div class="flip-card-front">
+                            <div class="portal-icon"><i class="fas fa-envelope"></i></div>
+                            <h3 id="contact-title">Contact/Hire Me</h3>
+                            <div class="contact-options">
+                                <div class="contact-method" id="contact-method-1">Email</div>
+                                <div class="contact-method" id="contact-method-2">Calendly</div>
+                                <div class="contact-method" id="contact-method-3">Consultation</div>
+                            </div>
+                        </div>
+                        <div class="flip-card-back">
+                            <h3>Get In Touch</h3>
+                            <p>Reach out for collaborations, consultations, or project inquiries.</p>
+                            <div class="enter-btn">
+                                <span id="contact-btn-text">Get in Touch</span> <span><i class="fas fa-arrow-right"></i></span>
+                            </div>
+                        </div>
+                    </div>
+                    <a href="contact.html" class="card-link"></a> <!-- Links to a contact page -->
+                </div>
+            </section>
+        </main>
+        
+        <footer class="footer">
+            <div class="footer-content">
+                <div class="footer-logo">Code<span>Struct</span></div>
+                <div class="footer-links">
+                    <a href="privacy.html">Privacy Policy</a>
+                    <a href="terms.html">Terms of Service</a>
+                </div>
+                <div class="footer-copyright">
+                    &copy; <span class="current-year"></span> <span id="copyright-name">Sumo The Styleful</span>. All rights reserved.
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Admin Panel Modal (content omitted for brevity but should be included as per your original file) -->
+    <div class="admin-panel" id="adminPanel">
+        <!-- ... Full admin panel HTML ... -->
+        <!-- You might have a login form or other content here if it was a modal. -->
+        <!-- If the 'admin-login-btn' class was previously used to toggle this modal via JavaScript, -->
+        <!-- that JavaScript might need adjustment if you still want modal functionality alongside the link, -->
+        <!-- or it might be removed if navigating to auth.html is the sole desired action. -->
+    </div>
+
+    <!-- Notification -->
+    <div class="notification" id="notification">
+        <div class="notification-content">
+            <i class="fas fa-check-circle"></i>
+            <span id="notification-message"></span>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/build/three.min.js"></script> <!-- If needed for this page -->
+    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script> <!-- If needed for this page -->
+    <script src="script.js"></script> <!-- Main script for this page -->
+</body>
+</html>

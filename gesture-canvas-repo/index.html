@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gesture Canvas</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=Instrument+Sans:wght@400;500;600;700&display=swap');
+
+:root{
+  --bg:#141417;--sbg:#1a1a1f;--pan:#222228;
+  --brd:#2c2c34;--brdh:#3e3e4c;
+  --txt:#e0e0e8;--dim:#7a7a8e;
+  --acc:#4a7aff;--accg:rgba(74,122,255,.3);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--txt);overflow:hidden;width:100vw;height:100vh}
+
+/* ═══ SPLASH ═══ */
+#splash{position:fixed;inset:0;z-index:9999;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity .5s,visibility .5s}
+#splash.off{opacity:0;visibility:hidden;pointer-events:none}
+.sp-icon{width:68px;height:68px;margin-bottom:24px;border-radius:18px;background:var(--pan);border:1px solid var(--brd);display:flex;align-items:center;justify-content:center;animation:pulse 2.4s ease-in-out infinite}
+@keyframes pulse{0%,100%{transform:scale(1);box-shadow:0 0 0 transparent}50%{transform:scale(1.04);box-shadow:0 0 24px var(--accg)}}
+.sp-icon svg{width:32px;height:32px}
+.sp-t{font-family:'Instrument Sans',sans-serif;font-size:1.7rem;font-weight:700;margin-bottom:6px}
+.sp-s{font-size:.92rem;color:var(--dim);margin-bottom:32px;text-align:center;line-height:1.5}
+#grantBtn{font-family:'DM Sans',sans-serif;font-size:.88rem;font-weight:600;padding:11px 30px;border:none;background:var(--acc);color:#fff;border-radius:10px;cursor:pointer;transition:all .2s}
+#grantBtn:hover{background:#5d8aff;transform:translateY(-1px);box-shadow:0 6px 20px var(--accg)}
+#loadMsg{margin-top:14px;font-size:.82rem;color:var(--dim);display:none}
+#loadMsg.on{display:block}
+.ld::after{content:'';animation:dd 1.2s steps(4) infinite}
+@keyframes dd{0%{content:''}25%{content:'.'}50%{content:'..'}75%{content:'...'}}
+
+/* ═══ LAYOUT ═══ */
+#app{display:none;width:100vw;height:100vh}
+#app.on{display:flex}
+
+/* ═══ SIDEBAR ═══ */
+#sidebar{width:254px;height:100vh;background:var(--sbg);border-right:1px solid var(--brd);display:flex;flex-direction:column;padding:18px 14px;overflow-y:auto;flex-shrink:0;z-index:50}
+.sb-brand{font-family:'Instrument Sans',sans-serif;font-weight:700;font-size:1.05rem;display:flex;align-items:center;gap:8px;margin-bottom:4px}
+.sb-dot{width:7px;height:7px;border-radius:50%;background:var(--acc);box-shadow:0 0 6px var(--accg)}
+.sec{margin-top:22px}
+.sec-label{font-size:.65rem;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--dim);margin-bottom:9px}
+
+/* Colors */
+.c-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:5px}
+.c-sw{width:100%;aspect-ratio:1;border-radius:7px;border:2px solid transparent;cursor:pointer;transition:all .12s;position:relative}
+.c-sw:hover{transform:scale(1.14)}
+.c-sw.on{border-color:var(--txt);box-shadow:0 0 10px rgba(255,255,255,.08)}
+.c-sw.on::after{content:'✓';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:.6rem;font-weight:700;color:rgba(0,0,0,.55)}
+.cust-row{display:flex;align-items:center;gap:8px;margin-top:7px}
+.cust-row input[type="color"]{width:30px;height:30px;border:none;border-radius:6px;cursor:pointer;background:none;padding:0}
+.cust-row span{font-size:.78rem;color:var(--dim)}
+
+/* Brush */
+.slider-row{display:flex;align-items:center;gap:10px}
+.brush-prev{width:34px;height:34px;display:flex;align-items:center;justify-content:center;background:var(--pan);border-radius:7px;border:1px solid var(--brd)}
+.brush-dot{border-radius:50%;transition:all .12s}
+input[type="range"]{flex:1;-webkit-appearance:none;appearance:none;height:3px;background:var(--brd);border-radius:3px;outline:none}
+input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;background:var(--acc);border-radius:50%;cursor:pointer;border:2px solid var(--sbg);box-shadow:0 0 6px var(--accg)}
+.b-val{font-size:.82rem;font-weight:600;min-width:22px;text-align:right;font-variant-numeric:tabular-nums}
+
+/* Buttons */
+.actions{display:flex;flex-direction:column;gap:5px;margin-top:18px}
+.sb-btn{font-family:'DM Sans',sans-serif;font-size:.8rem;font-weight:500;padding:9px 12px;background:var(--pan);border:1px solid var(--brd);color:var(--dim);border-radius:7px;cursor:pointer;transition:all .12s;text-align:left;display:flex;align-items:center;gap:7px}
+.sb-btn:hover{background:var(--brd);color:var(--txt);border-color:var(--brdh)}
+.sb-btn svg{width:15px;height:15px;flex-shrink:0}
+.sb-btn.tog-on{background:rgba(74,122,255,.08);border-color:rgba(74,122,255,.25);color:var(--acc)}
+
+/* Status */
+.g-info{margin-top:auto;padding:12px;background:var(--pan);border-radius:10px;border:1px solid var(--brd)}
+.gi-r{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px}
+.gi-r:last-child{margin-bottom:0}
+.gi-k{font-size:.72rem;color:var(--dim)}
+.gi-v{font-size:.75rem;font-weight:600;color:var(--acc)}
+
+/* Help */
+.help-sec{margin-top:16px}
+.help-item{font-size:.7rem;color:var(--dim);padding:3px 0;display:flex;gap:6px;line-height:1.3}
+.help-icon{flex-shrink:0;width:18px;text-align:center;font-size:.8rem}
+
+/* ═══ CANVAS ═══ */
+#carea{flex:1;position:relative;overflow:hidden;background:#17171b}
+video#cam{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transform:scaleX(-1);z-index:1;filter:brightness(.22) saturate(.4)}
+canvas#dc{position:absolute;inset:0;width:100%;height:100%;z-index:2}
+canvas#sk{position:absolute;inset:0;width:100%;height:100%;z-index:3;pointer-events:none}
+
+/* Selection ring */
+#selRing{position:fixed;z-index:10;border:2px dashed var(--acc);border-radius:6px;pointer-events:none;display:none;box-shadow:0 0 10px var(--accg);animation:selp 1.4s ease-in-out infinite}
+@keyframes selp{0%,100%{opacity:.65}50%{opacity:1}}
+
+/* Mode indicator on canvas */
+#modeTag{position:absolute;bottom:16px;right:16px;z-index:100;font-size:.75rem;font-weight:600;padding:6px 16px;background:rgba(20,20,23,.8);border:1px solid var(--brd);border-radius:8px;color:var(--acc);backdrop-filter:blur(6px);pointer-events:none;transition:opacity .2s;opacity:0}
+#modeTag.vis{opacity:1}
+</style>
+</head>
+<body>
+
+<div id="splash">
+  <div class="sp-icon">
+    <svg viewBox="0 0 32 32" fill="none" stroke="#4a7aff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M16 3v9M11 5v11M21 5v11M7 10v8q0 7 9 11 9-4 9-11V10"/>
+    </svg>
+  </div>
+  <div class="sp-t">Gesture Canvas</div>
+  <div class="sp-s">Draw, select, rotate and scale with your hands.<br>Camera access is needed for hand tracking.</div>
+  <button id="grantBtn">Enable Camera</button>
+  <div id="loadMsg">Loading hand model<span class="ld"></span></div>
+</div>
+
+<div id="app">
+  <div id="sidebar">
+    <div class="sb-brand"><div class="sb-dot"></div>Gesture Canvas</div>
+
+    <div class="sec">
+      <div class="sec-label">Color</div>
+      <div class="c-grid" id="cGrid"></div>
+      <div class="cust-row">
+        <input type="color" id="custCol" value="#4a7aff">
+        <span>Custom</span>
+      </div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-label">Brush Size</div>
+      <div class="slider-row">
+        <div class="brush-prev"><div class="brush-dot" id="bDot"></div></div>
+        <input type="range" id="bSlider" min="1" max="24" value="3">
+        <span class="b-val" id="bVal">3</span>
+      </div>
+    </div>
+
+    <div class="sec actions">
+      <div class="sec-label">Tools</div>
+      <button class="sb-btn" onclick="clearAll()">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M2 4h12M5 4V3a1 1 0 011-1h4a1 1 0 011 1v1M6 7v5M10 7v5M3 4l1 9a1 1 0 001 1h6a1 1 0 001-1l1-9"/></svg>
+        Clear Canvas
+      </button>
+      <button class="sb-btn" onclick="undo()">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M3 6h7a3 3 0 010 6H8M3 6l3-3M3 6l3 3"/></svg>
+        Undo
+      </button>
+      <button class="sb-btn" onclick="savePNG()">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M8 2v8m0 0l-3-3m3 3l3-3M3 12v1a1 1 0 001 1h8a1 1 0 001-1v-1"/></svg>
+        Save PNG
+      </button>
+      <button class="sb-btn tog-on" id="skelBtn" onclick="togSkel()">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="8" cy="3" r="2"/><path d="M8 5v5M4 8h8M5 14l3-4 3 4"/></svg>
+        Skeleton
+      </button>
+    </div>
+
+    <div class="sec help-sec">
+      <div class="sec-label">Gestures</div>
+      <div class="help-item"><span class="help-icon">☝️</span>Index finger → Draw</div>
+      <div class="help-item"><span class="help-icon">✋</span>Open palm hold → Select nearest stroke</div>
+      <div class="help-item"><span class="help-icon">👍</span>Thumbs up → Zoom in selected</div>
+      <div class="help-item"><span class="help-icon">👎</span>Thumbs down → Zoom out selected</div>
+      <div class="help-item"><span class="help-icon">🙌</span>Two hands → Rotate selected</div>
+      <div class="help-item"><span class="help-icon">✊</span>Fist → Deselect</div>
+    </div>
+
+    <div class="g-info">
+      <div class="gi-r"><span class="gi-k">Gesture</span><span class="gi-v" id="giG">None</span></div>
+      <div class="gi-r"><span class="gi-k">Mode</span><span class="gi-v" id="giM">Idle</span></div>
+      <div class="gi-r"><span class="gi-k">Selected</span><span class="gi-v" id="giS">—</span></div>
+      <div class="gi-r"><span class="gi-k">Rotation</span><span class="gi-v" id="giR">0°</span></div>
+      <div class="gi-r"><span class="gi-k">Scale</span><span class="gi-v" id="giSc">1.00</span></div>
+    </div>
+  </div>
+
+  <div id="carea">
+    <video id="cam" autoplay playsinline></video>
+    <canvas id="dc"></canvas>
+    <canvas id="sk"></canvas>
+    <div id="modeTag"></div>
+  </div>
+</div>
+
+<div id="selRing"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1675469240/hands.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils@0.3.1675466862/camera_utils.min.js"></script>
+<script>
+/* ═══ CONFIG ═══ */
+const COLORS=['#4a7aff','#22d3ee','#2dd4a0','#a855f7','#ff5caa',
+  '#ff4a6a','#ff8c42','#ffd449','#f0f0f5','#555566'];
+const SMOOTH_N=5;
+
+/* ═══ STATE ═══ */
+let color=COLORS[0],brush=3,showSkel=true;
+let strokes=[],curStroke=null,drawing=false;
+let selIdx=-1;
+let lmHist=[[],[]];
+let thStartAng=null,thStartRot=null;
+let zoomRate=0; // for smooth zoom
+
+/* ═══ DOM ═══ */
+const $=id=>document.getElementById(id);
+const splash=$('splash'),app=$('app'),video=$('cam'),carea=$('carea');
+const dCan=$('dc'),sCan=$('sk');
+const dCtx=dCan.getContext('2d'),sCtx=sCan.getContext('2d');
+const selRing=$('selRing'),modeTag=$('modeTag');
+
+/* ═══ SIDEBAR ═══ */
+COLORS.forEach((c,i)=>{
+  const d=document.createElement('div');
+  d.className='c-sw'+(i===0?' on':'');d.style.background=c;
+  d.onclick=()=>{document.querySelectorAll('.c-sw').forEach(s=>s.classList.remove('on'));d.classList.add('on');color=c;updBrush()};
+  $('cGrid').appendChild(d);
+});
+$('custCol').addEventListener('input',e=>{color=e.target.value;document.querySelectorAll('.c-sw').forEach(s=>s.classList.remove('on'));updBrush()});
+$('bSlider').addEventListener('input',e=>{brush=+e.target.value;$('bVal').textContent=brush;updBrush()});
+
+function updBrush(){
+  const s=Math.max(4,Math.min(brush*2,26));
+  $('bDot').style.width=$('bDot').style.height=s+'px';
+  $('bDot').style.background=color;$('bDot').style.boxShadow=`0 0 5px ${color}`;
+}
+updBrush();
+
+/* ═══ RESIZE ═══ */
+function resize(){
+  const r=carea.getBoundingClientRect();
+  dCan.width=sCan.width=r.width;dCan.height=sCan.height=r.height;redraw();
+}
+window.addEventListener('resize',resize);
+
+/* ═══ COORDINATES (un-mirror) ═══ */
+function lm2c(lm){
+  const r=carea.getBoundingClientRect();
+  return{x:(1-lm.x)*r.width,y:lm.y*r.height};
+}
+
+/* ═══ DRAW ENGINE ═══ */
+function redraw(){
+  dCtx.clearRect(0,0,dCan.width,dCan.height);
+  strokes.forEach((s,i)=>renderStroke(s,i===selIdx));
+  if(curStroke)renderStroke(curStroke,false);
+  updSelRing();
+}
+
+function renderStroke(s,sel){
+  if(s.pts.length<2)return;
+  dCtx.save();
+  if(s.cx!==undefined){
+    dCtx.translate(s.cx,s.cy);
+    dCtx.rotate((s.rot||0)*Math.PI/180);
+    dCtx.scale(s.sc||1,s.sc||1);
+    dCtx.translate(-s.cx,-s.cy);
+  }
+  // glow
+  dCtx.lineCap=dCtx.lineJoin='round';
+  dCtx.lineWidth=s.sz+5;dCtx.strokeStyle=s.col;
+  dCtx.globalAlpha=.07;dCtx.filter=`blur(${s.sz}px)`;
+  trace(dCtx,s.pts);dCtx.stroke();dCtx.filter='none';
+  // main
+  dCtx.globalAlpha=.92;dCtx.lineWidth=s.sz;dCtx.strokeStyle=s.col;
+  dCtx.shadowColor=s.col;dCtx.shadowBlur=s.sz*2.2;
+  trace(dCtx,s.pts);dCtx.stroke();
+  // core
+  dCtx.globalAlpha=.4;dCtx.lineWidth=Math.max(1,s.sz*.3);
+  dCtx.strokeStyle='#fff';dCtx.shadowBlur=s.sz;
+  trace(dCtx,s.pts);dCtx.stroke();
+  dCtx.shadowBlur=0;dCtx.globalAlpha=1;
+  if(sel){
+    dCtx.setLineDash([5,3]);dCtx.lineWidth=1.5;
+    dCtx.strokeStyle='rgba(74,122,255,.55)';
+    trace(dCtx,s.pts);dCtx.stroke();dCtx.setLineDash([]);
+  }
+  dCtx.restore();
+}
+
+function trace(ctx,pts){
+  ctx.beginPath();ctx.moveTo(pts[0].x,pts[0].y);
+  for(let i=1;i<pts.length;i++){
+    const p=pts[i-1],c=pts[i];
+    ctx.quadraticCurveTo(p.x,p.y,(p.x+c.x)/2,(p.y+c.y)/2);
+  }
+}
+
+function bounds(s){
+  let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;
+  for(const p of s.pts){if(p.x<x0)x0=p.x;if(p.y<y0)y0=p.y;if(p.x>x1)x1=p.x;if(p.y>y1)y1=p.y}
+  return{x0,y0,x1,y1,cx:(x0+x1)/2,cy:(y0+y1)/2};
+}
+
+function initCenter(s){
+  const b=bounds(s);s.cx=b.cx;s.cy=b.cy;
+  if(s.rot===undefined)s.rot=0;if(s.sc===undefined)s.sc=1;
+}
+
+/* Find nearest stroke to point — very generous, selects closest stroke on canvas */
+function findNearest(x,y){
+  if(!strokes.length)return -1;
+  let best=-1,bestD=Infinity;
+  for(let i=0;i<strokes.length;i++){
+    const b=bounds(strokes[i]);
+    // distance to bounding box center
+    const dx=x-b.cx,dy=y-b.cy;
+    const dist=Math.sqrt(dx*dx+dy*dy);
+    if(dist<bestD){bestD=dist;best=i}
+  }
+  return best;
+}
+
+function updSelRing(){
+  if(selIdx<0||selIdx>=strokes.length){selRing.style.display='none';return}
+  const s=strokes[selIdx],b=bounds(s);
+  const r=carea.getBoundingClientRect(),pad=14;
+  selRing.style.display='block';
+  selRing.style.left=(r.left+b.x0-pad)+'px';selRing.style.top=(r.top+b.y0-pad)+'px';
+  selRing.style.width=(b.x1-b.x0+pad*2)+'px';selRing.style.height=(b.y1-b.y0+pad*2)+'px';
+}
+
+/* ═══ ACTIONS ═══ */
+function clearAll(){strokes=[];curStroke=null;selIdx=-1;redraw()}
+function undo(){if(!strokes.length)return;if(selIdx===strokes.length-1)selIdx=-1;strokes.pop();redraw()}
+function savePNG(){
+  const t=document.createElement('canvas');t.width=dCan.width;t.height=dCan.height;
+  const c=t.getContext('2d');c.fillStyle='#17171b';c.fillRect(0,0,t.width,t.height);c.drawImage(dCan,0,0);
+  const a=document.createElement('a');a.download='gesture-canvas.png';a.href=t.toDataURL('image/png');a.click();
+}
+function togSkel(){
+  showSkel=!showSkel;$('skelBtn').classList.toggle('tog-on',showSkel);
+  if(!showSkel)sCtx.clearRect(0,0,sCan.width,sCan.height);
+}
+
+function showMode(txt){
+  modeTag.textContent=txt;modeTag.classList.add('vis');
+  clearTimeout(showMode._t);showMode._t=setTimeout(()=>modeTag.classList.remove('vis'),1200);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   GESTURE DETECTION — all new, very distinct gestures
+   ═══════════════════════════════════════════════════════════════
+
+   We check concrete finger states using tip vs PIP y-position
+   and thumb direction. Each gesture is very different from others:
+
+   • DRAW:       Index up, all others down
+   • OPEN_PALM:  All 4 fingers up + thumb out → SELECT
+   • THUMBS_UP:  Thumb tip above thumb IP, all fingers curled → ZOOM IN
+   • THUMBS_DN:  Thumb tip below wrist, all fingers curled → ZOOM OUT
+   • FIST:       Everything curled, thumb tucked → DESELECT
+   • (two hands detected = ROTATE, handled separately)
+*/
+
+function tipY(lm,i){return lm[i].y}
+
+function fingerUp(lm,finger){
+  // true if fingertip is above its PIP joint (lower y = higher on screen)
+  const tips={index:8,middle:12,ring:16,pinky:20};
+  const pips={index:6,middle:10,ring:14,pinky:18};
+  return lm[tips[finger]].y < lm[pips[finger]].y - 0.01;
+}
+
+function fingerCurled(lm,finger){
+  const tips={index:8,middle:12,ring:16,pinky:20};
+  const pips={index:6,middle:10,ring:14,pinky:18};
+  return lm[tips[finger]].y > lm[pips[finger]].y + 0.01;
+}
+
+function detectGesture(lm){
+  const idxUp=fingerUp(lm,'index');
+  const midUp=fingerUp(lm,'middle');
+  const rngUp=fingerUp(lm,'ring');
+  const pnkUp=fingerUp(lm,'pinky');
+
+  const idxCurl=fingerCurled(lm,'index');
+  const midCurl=fingerCurled(lm,'middle');
+  const rngCurl=fingerCurled(lm,'ring');
+  const pnkCurl=fingerCurled(lm,'pinky');
+
+  const allCurled=idxCurl&&midCurl&&rngCurl&&pnkCurl;
+
+  // Thumb pointing up: thumb tip (4) is well above thumb IP (3) and above index MCP (5)
+  const thumbTipY=lm[4].y;
+  const thumbIPY=lm[3].y;
+  const wristY=lm[0].y;
+  const thumbUp=allCurled && thumbTipY < thumbIPY - 0.04 && thumbTipY < lm[5].y;
+  const thumbDn=allCurled && thumbTipY > thumbIPY + 0.04 && thumbTipY > wristY;
+
+  // Fist: everything curled including thumb tucked (thumb tip close to palm)
+  const thumbTucked=Math.abs(lm[4].x-lm[2].x)<0.04;
+
+  if(thumbUp) return 'thumbs_up';
+  if(thumbDn) return 'thumbs_down';
+  if(allCurled && thumbTucked) return 'fist';
+
+  // Open palm: all 4 fingers extended
+  if(idxUp&&midUp&&rngUp&&pnkUp) return 'open_palm';
+
+  // Draw: only index up, rest curled
+  if(idxUp&&midCurl&&rngCurl&&pnkCurl) return 'draw';
+
+  return 'none';
+}
+
+/* ═══ SMOOTHING ═══ */
+function smooth(hi,raw){
+  lmHist[hi].push(raw.map(l=>({x:l.x,y:l.y,z:l.z})));
+  if(lmHist[hi].length>SMOOTH_N)lmHist[hi].shift();
+  const h=lmHist[hi],n=h.length;
+  return raw.map((_,i)=>{
+    let sx=0,sy=0,sz=0;
+    for(const f of h){sx+=f[i].x;sy+=f[i].y;sz+=f[i].z}
+    return{x:sx/n,y:sy/n,z:sz/n};
+  });
+}
+
+/* ═══ SKELETON ═══ */
+const CONNS=[[0,1],[1,2],[2,3],[3,4],[0,5],[5,6],[6,7],[7,8],
+  [0,9],[9,10],[10,11],[11,12],[0,13],[13,14],[14,15],[15,16],
+  [0,17],[17,18],[18,19],[19,20],[5,9],[9,13],[13,17]];
+
+function drawSkel(lm){
+  sCtx.lineWidth=1.4;sCtx.strokeStyle='rgba(74,122,255,.25)';
+  for(const[a,b]of CONNS){
+    const pa=lm2c(lm[a]),pb=lm2c(lm[b]);
+    sCtx.beginPath();sCtx.moveTo(pa.x,pa.y);sCtx.lineTo(pb.x,pb.y);sCtx.stroke();
+  }
+  for(let i=0;i<lm.length;i++){
+    const p=lm2c(lm[i]);
+    const r=[0,4,8,12,16,20].includes(i)?3.5:2;
+    sCtx.beginPath();sCtx.arc(p.x,p.y,r,0,Math.PI*2);
+    sCtx.fillStyle=[4,8,12,16,20].includes(i)?'#ff5caa':'#4a7aff';
+    sCtx.fill();
+  }
+}
+
+/* ═══ HUD ═══ */
+function hud(g,m){
+  $('giG').textContent=g;$('giM').textContent=m;
+  $('giS').textContent=selIdx>=0?`Stroke #${selIdx+1}`:'—';
+  const sr=selIdx>=0?strokes[selIdx]:null;
+  $('giR').textContent=sr?Math.round(sr.rot||0)+'°':'0°';
+  $('giSc').textContent=sr?(sr.sc||1).toFixed(2):'1.00';
+}
+
+function finishStroke(){
+  if(drawing&&curStroke&&curStroke.pts.length>1){initCenter(curStroke);strokes.push(curStroke)}
+  drawing=false;curStroke=null;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   MAIN HANDLER
+   ═══════════════════════════════════════════════════════════════ */
+let selectDebounce=0;
+
+function onResults(res){
+  sCtx.clearRect(0,0,sCan.width,sCan.height);
+  const now=Date.now();
+  let gN='None',mN='Idle';
+
+  if(!res.multiHandLandmarks||!res.multiHandLandmarks.length){
+    finishStroke();thStartAng=null;
+    hud(gN,mN);return;
+  }
+
+  /* ── TWO HANDS → ROTATE ── */
+  if(res.multiHandLandmarks.length>1){
+    finishStroke();
+    const lm0=smooth(0,res.multiHandLandmarks[0]);
+    const lm1=smooth(1,res.multiHandLandmarks[1]);
+    if(showSkel){drawSkel(lm0);drawSkel(lm1)}
+    gN='Two Hands';
+    if(selIdx>=0){
+      mN='Rotating';
+      const w0=lm2c(lm0[0]),w1=lm2c(lm1[0]);
+      const ang=Math.atan2(w1.y-w0.y,w1.x-w0.x)*180/Math.PI;
+      if(thStartAng===null){thStartAng=ang;thStartRot=strokes[selIdx].rot||0}
+      else{strokes[selIdx].rot=thStartRot+(ang-thStartAng);redraw()}
+    }else{mN='Rotate (select first)'}
+    hud(gN,mN);return;
+  }
+
+  /* ── SINGLE HAND ── */
+  thStartAng=null;
+  const lm=smooth(0,res.multiHandLandmarks[0]);
+  const gesture=detectGesture(lm);
+  gN=gesture.replace(/_/g,' ');gN=gN[0].toUpperCase()+gN.slice(1);
+  if(showSkel)drawSkel(lm);
+
+  const tip=lm2c(lm[8]);
+
+  switch(gesture){
+
+    case 'draw':{
+      mN='Drawing';
+      selIdx=-1;
+      if(!drawing){curStroke={col:color,sz:brush,pts:[],rot:0,sc:1};drawing=true}
+      curStroke.pts.push({x:tip.x,y:tip.y});
+      redraw();break;
+    }
+
+    case 'open_palm':{
+      finishStroke();
+      mN='Selecting';
+      // Use palm center (landmark 9 = middle finger MCP) as selection point
+      const palm=lm2c(lm[9]);
+      if(now-selectDebounce>600){
+        const found=findNearest(palm.x,palm.y);
+        if(found>=0&&found!==selIdx){
+          selIdx=found;
+          initCenter(strokes[found]);
+          showMode('Selected Stroke #'+(found+1));
+          selectDebounce=now;
+        }
+        redraw();
+      }
+      mN=selIdx>=0?'Selected #'+(selIdx+1):'No strokes';
+      break;
+    }
+
+    case 'thumbs_up':{
+      finishStroke();
+      if(selIdx>=0){
+        mN='Zoom In';
+        strokes[selIdx].sc=Math.min(5,(strokes[selIdx].sc||1)*1.015);
+        redraw();
+      }else{mN='Zoom (select first)'}
+      break;
+    }
+
+    case 'thumbs_down':{
+      finishStroke();
+      if(selIdx>=0){
+        mN='Zoom Out';
+        strokes[selIdx].sc=Math.max(.1,(strokes[selIdx].sc||1)*0.985);
+        redraw();
+      }else{mN='Zoom (select first)'}
+      break;
+    }
+
+    case 'fist':{
+      finishStroke();
+      if(selIdx>=0) showMode('Deselected');
+      selIdx=-1;mN='Deselect';redraw();break;
+    }
+
+    default:{finishStroke();break}
+  }
+
+  hud(gN,mN);
+}
+
+/* ═══ MEDIAPIPE ═══ */
+async function init(){
+  const hands=new Hands({locateFile:f=>`https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1675469240/${f}`});
+  hands.setOptions({maxNumHands:2,modelComplexity:1,minDetectionConfidence:.6,minTrackingConfidence:.5});
+  hands.onResults(onResults);
+  const cam=new Camera(video,{onFrame:async()=>{await hands.send({image:video})},width:1280,height:720});
+  await cam.start();
+}
+
+$('grantBtn').addEventListener('click',async()=>{
+  $('grantBtn').style.display='none';$('loadMsg').classList.add('on');
+  try{await init();resize();splash.classList.add('off');app.classList.add('on');setTimeout(resize,120)}
+  catch(e){$('loadMsg').textContent='Error: '+e.message;$('loadMsg').style.color='#ff4a6a'}
+});
+</script>
+</body>
+</html>
